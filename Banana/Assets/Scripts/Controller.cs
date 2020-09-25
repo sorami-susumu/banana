@@ -1,29 +1,52 @@
 ﻿using UnityEngine;
+using UnityEngine.UI;
 
 public class Controller : MonoBehaviour
 {
-    private Vector3 deltaObjectPosition;
-    private const float SPEED = 5f;
-    private const float ANGLE_SPEED = 50f;
-    // Start is called before the first frame update
+    /// <summary>
+    /// 最高速を決める変数(km/h)
+    /// </summary>
+    private float maxSpped = 60f;
+    
+    /// <summary>
+    /// 加速度を決める変数(km/h*s)
+    /// </summary>
+    private float accelPerSecond = 5f;
+    
+    /// <summary>
+    /// 旋回力を決める変数(deg/s)
+    /// </summary>
+    private float rotatePerSecond = 50f;
+
+    private float speed;
+    private Rigidbody rb = null;
+    [SerializeField] private Text speedMeter = null;
+
+
     void Start()
     {
+        speed = 0;
+        rb = GetComponent<Rigidbody>();
     }
 
     // Update is called once per frame
     void Update()
     {
+        // スペースキーによる加速度の調整
+        if (Input.GetKey(KeyCode.Space))
+        {
+            speed += accelPerSecond * Time.deltaTime;
+            if (speed > maxSpped) speed = maxSpped;
+        }
+        else
+        {
+            speed -= accelPerSecond * Time.deltaTime;
+            if (speed < 0) speed = 0;
+        }
+        rb.velocity = transform.forward * speed;
+        speedMeter.text = $"<color=white>{speed.ToString("f2")} m/s</color>";
+
         var deltaHorizontal = Input.GetAxis("Horizontal");
-        if (deltaHorizontal != 0) {
-            var rot = Quaternion.AngleAxis(Time.deltaTime * deltaHorizontal * ANGLE_SPEED, Vector3.up);
-            transform.rotation = transform.rotation * rot; 
-        }
-        if (Input.GetKey(KeyCode.Space)) {
-            transform.position += new Vector3(
-                Time.deltaTime * SPEED * Mathf.Sin(transform.rotation.eulerAngles.y * Mathf.Deg2Rad),
-                0,
-                Time.deltaTime * SPEED * Mathf.Cos(transform.rotation.eulerAngles.y * Mathf.Deg2Rad)
-            );
-        }
+        transform.Rotate(Vector3.up, rotatePerSecond * deltaHorizontal * Time.deltaTime);
     }
 }
